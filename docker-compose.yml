@@ -2,9 +2,10 @@ version: '3.7'
 
 services:
   web:
-    build:
-       dockerfile: ./docker/web.Dockerfile
-       context: .
+#    build:
+#       dockerfile: ./docker/web.Dockerfile
+#       context: .
+    image: pionwebrtc/ion-web
     volumes:
       - "./docker/Caddyfile:/etc/Caddyfile"
     ports:
