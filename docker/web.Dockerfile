@@ -8,6 +8,7 @@ RUN apk add --no-cache --update nodejs npm \
   && mkdir -p /app/demo \
   && npm install \
   && cd demo  \
+  && npm rebuild node-sass \
   && npm install \
   && npm run build \
   && mv dist /app/demo \
