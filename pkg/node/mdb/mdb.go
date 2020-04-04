@@ -9,19 +9,22 @@ import "C"
 import (
     "fmt"
     "log"
-    "strconv"
     "net/http"
     "io/ioutil"
     "encoding/json"
     "github.com/gorilla/mux"
 )
 
-type GetResult struct {
+type GetResponse struct {
 	Meetings []int
 }
 
 type CreateRequest struct {
 	PersonNumbers []string
+}
+
+type CreateResponse struct {
+	Meeting int
 }
 
 
@@ -30,19 +33,12 @@ func main() {
 	defer C.close_db()
 
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/create/{id}", create)
+	router.HandleFunc("/create", create)
 	router.HandleFunc("/get/{id}", get)
 	log.Fatal(http.ListenAndServe(":8081", router))
 }
 
 func create(w http.ResponseWriter, r *http.Request) {
-	key, err := strconv.Atoi(mux.Vars(r)["id"])
-	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "Invalid meeting id", http.StatusBadRequest)
-		return
-	}
-
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if (err != nil) {
@@ -59,11 +55,16 @@ func create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if (! meetingExists(key)) {
-		createMeetingInDatabase(key, create.PersonNumbers)
-		http.Error(w, "Meeting already exists", http.StatusBadRequest)
-		return
+	response := CreateResponse {createMeetingInDatabase(create.PersonNumbers)}
+	res, err := json.Marshal(response)
+
+	if (err != nil) {
+		http.Error(w, "Failed to serializer request data", http.StatusBadRequest)
+		panic(err)
 	}
+
+	fmt.Fprintf(w, string(res))
+
 }
 
 func get(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +72,7 @@ func get(w http.ResponseWriter, r *http.Request) {
 
 	key := mux.Vars(r)["id"]
 
-	meetings := GetResult{getMeetingsFromDatabase(key)}
+	meetings := GetResponse{getMeetingsFromDatabase(key)}
 	res, err := json.Marshal(meetings)
 
 	if (err != nil) {
@@ -82,12 +83,7 @@ func get(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, string(res))
 }
 
-func meetingExists(id int) bool {
-	ret := int(C.check_meeting(C.long(id)))
-	return ret != 0
-}
-
-func createMeetingInDatabase(id int, personalNumbers []string) {
+func createMeetingInDatabase(personalNumbers []string) int {
 	cArray := C.create_array(C.int(len(personalNumbers)))
 	defer C.delete_array(cArray, C.int(len(personalNumbers)))
 
@@ -95,7 +91,7 @@ func createMeetingInDatabase(id int, personalNumbers []string) {
 		C.set_array(cArray, C.CString(personalNumbers[i]), C.int(i))
 	}
 
-	C.create_meeting(C.long(id), C.int(len(personalNumbers)), cArray)
+	return int(C.create_meeting(C.int(len(personalNumbers)), cArray))
 }
 
 func getMeetingsFromDatabase(personalNumber string) []int {

@@ -4,10 +4,7 @@
 void open_db();
 void close_db();
 
-typedef enum {false, true} bool;
-
-void create_meeting(long meeting_id, int num_attendees, const char* attendees[]);
+long create_meeting(int num_attendees, const char* attendees[]);
 int get_meetings(const char* personal_number, int* ids, int max_size);
-bool check_meeting(long meeting_id);
 
 #endif

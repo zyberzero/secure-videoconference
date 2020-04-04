@@ -4,34 +4,34 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <pthread.h>
 
-// TODO: fetch from somewhere
-const char* SECRET_KEY = "theveryhemliganyckleln";
+#define SECRET_KEY_DEFAULT "theveryhemliganyckleln"
+#define SECRET_KEY_ENV     "MDB_SQLITE_KEY"
+#define DB_FILENAME        "meetings.sqlite"
 
-const char* DB_FILENAME = "meetings.sqlite";
+#define QUERY_CREATE       "CREATE TABLE IF NOT EXISTS invites ("   \
+                           " id INTEGER PRIMARY KEY AUTOINCREMENT," \
+                           " personal_number TEXT,"                 \
+                           " meeting_id INTEGER) ;"
 
-const char* QUERY_CREATE = "CREATE TABLE IF NOT EXISTS invites ("
-                           " id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                           " personal_number TEXT,"
-                           " meeting_id INTEGER) ;";
+#define QUERY_INSERT       "INSERT INTO invites (personal_number, meeting_id)" \
+                           " values (?, ?)"
 
-const char* QUERY_INSERT = "INSERT INTO invites (personal_number, meeting_id)"
-                           " values (?, ?)";
+#define QUERY_SELECT       "SELECT meeting_id FROM invites" \
+                           " WHERE personal_number = ?"
 
-const char* QUERY_SELECT = "SELECT meeting_id FROM invites"
-                           " WHERE personal_number = ?";
-
-const char* QUERY_EXISTS = "SELECT 1 FROM invites"
-                           " WHERE meeting_id = ?;";
+#define QUERY_NEXT         "SELECT MAX(meeting_id) + 1 from invites;"
 
 #define CHECK_ERROR(actual, expected) \
-if (actual != expected) \
-{ \
-		puts(sqlite3_errstr(rc)); \
-		assert(0); \
+if (actual != expected)               \
+{                                     \
+    puts(sqlite3_errstr(rc));         \
+    assert(0);                        \
 }
 
-static sqlite3* db = NULL;
+static pthread_mutex_t create_lock = PTHREAD_MUTEX_INITIALIZER;
+static sqlite3* db                 = NULL;
 
 void open_db()
 {
@@ -39,13 +39,13 @@ void open_db()
 	rc = sqlite3_open(DB_FILENAME, &db);
 	CHECK_ERROR(rc, SQLITE_OK);
 
-	const char* key = getenv("MDB_SQLITE_KEY");
+	const char* key = getenv(SECRET_KEY_ENV);
 	if (!key)
 	{
-		fprintf(stderr, "WARNING: using default encryption key\n");
-		key = SECRET_KEY;
+		fputs("ERROR: using default encryption key", stderr);
+		key = SECRET_KEY_DEFAULT;
 	}
-	rc = sqlite3_key(db, key, strlen(SECRET_KEY));
+	rc = sqlite3_key(db, key, strlen(key));
 	CHECK_ERROR(rc, SQLITE_OK);
 
 	char* err;
@@ -59,10 +59,33 @@ void close_db()
 	db = NULL;
 }
 
-void create_meeting(long meeting_id, int num_attendees, const char* attendees[])
+static long create_meeting_id()
 {
+	int rc;
+	sqlite3_stmt* statement;
+	rc = sqlite3_prepare_v2(db, QUERY_NEXT, -1, &statement, NULL);
+	CHECK_ERROR(rc, SQLITE_OK);
+
+	rc = sqlite3_step(statement);
+	CHECK_ERROR(rc, SQLITE_ROW);
+
+	long id = sqlite3_column_int(statement, 0);
+	sqlite3_finalize(statement);
+
+	return id;
+}
+
+long create_meeting(int num_attendees, const char* attendees[])
+{
+	if (num_attendees <= 0)
+		return -1;
+
 	assert(db);
-	// TODO: check that meeting doesn't exist
+
+	// Syncronize here so that the id cannot be allocated again before
+	// it is inserted.
+	pthread_mutex_lock(&create_lock);
+	long meeting_id = create_meeting_id();
 
 	sqlite3_stmt* statement;
 	int rc;
@@ -84,7 +107,10 @@ void create_meeting(long meeting_id, int num_attendees, const char* attendees[])
 		CHECK_ERROR(rc, SQLITE_OK);
 	}
 
+	pthread_mutex_unlock(&create_lock);
+
 	sqlite3_finalize(statement);
+	return meeting_id;
 }
 
 int get_meetings(const char* personal_number, int* ids, int max_size)
@@ -108,24 +134,4 @@ int get_meetings(const char* personal_number, int* ids, int max_size)
 
 	sqlite3_finalize(statement);
 	return count;
-}
-
-// This should be updated if we add a second table with meetings
-bool check_meeting(long meeting_id)
-{
-	assert(db);
-
-	sqlite3_stmt* statement;
-	int rc;
-	rc = sqlite3_prepare_v2(db, QUERY_EXISTS, -1, &statement, NULL);
-	CHECK_ERROR(rc, SQLITE_OK);
-
-	rc = sqlite3_bind_int(statement, 1, meeting_id);
-	CHECK_ERROR(rc, SQLITE_OK);
-
-	rc = sqlite3_step(statement);
-	if (rc == SQLITE_ROW)
-		return true;
-
-	return false;
 }
