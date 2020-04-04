@@ -2,7 +2,13 @@ package biz
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"strings"
+	"time"
 
 	nprotoo "github.com/cloudwebrtc/nats-protoo"
 	"github.com/pion/ion/pkg/discovery"
@@ -111,8 +117,105 @@ func getRPCForSFU(mid string) (string, *nprotoo.Requestor, *nprotoo.Error) {
 
 func login(peer *signal.Peer, msg map[string]interface{}) (map[string]interface{}, *nprotoo.Error) {
 	log.Infof("biz.login peer.ID()=%s msg=%v", peer.ID(), msg)
-	//TODO auth check, maybe jwt
+
 	return emptyMap, nil
+}
+
+func loginBankID(peer *signal.Peer, msg map[string]interface{}) (map[string]interface{}, error) {
+	// authenticate with bank ID
+
+	delay := 60
+
+	tr := &http.Transport{
+		MaxIdleConns:       10,
+		IdleConnTimeout:    30 * time.Second,
+		DisableCompression: true,
+	}
+	client := &http.Client{Transport: tr}
+
+	grandAPI := os.Getenv("GRANDID_API")
+	grandService := os.Getenv("GRANDID_SERVICE")
+	var infoMap map[string]interface{}
+	infoMap, _ = msg["info"].(map[string]interface{})
+	name := util.Val(infoMap, "name")
+
+	log.Infof("biz.loginBankID api=" + grandAPI + " service=" + grandService + " name=" + name + " rid=" + util.Val(msg, "rid"))
+
+	url := "https://client.grandid.com/json1.1/FederatedLogin?apiKey=" + grandAPI + "&authenticateServiceKey=" + grandService
+	bodyText := "thisDevice=false&mobileBankId=true&askForSSN=false&personalNumber=" + name + "&gui=false"
+	bodyReader := strings.NewReader(bodyText)
+	contenttype := "application/x-www-form-urlencoded"
+
+	log.Infof("biz.loginBankID url=%s body=%s", url, bodyText)
+
+	resp, err := client.Post(url, contenttype, bodyReader)
+
+	log.Infof("biz.loginBankID resp=%s err=%s", resp, err)
+	if err != nil {
+		return msg, err
+	}
+	defer resp.Body.Close()
+
+	// get the json struct
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return msg, err
+	}
+	var data map[string]string
+	log.Infof("biz.loginBankID body=%s", body)
+	err = json.Unmarshal([]byte(body), &data)
+	log.Infof("biz.loginBankID data=%s", data)
+	sessionID := data["sessionId"]
+
+	i := 0
+	for i < delay {
+		i++
+		resp, err := client.Get("https://client.grandid.com/json1.1/GetSession?apiKey=" + grandAPI + "&authenticateServiceKey=" + grandService + "&sessionId=" + sessionID)
+		if err != nil {
+			return msg, err
+		}
+		defer resp.Body.Close()
+
+		// get the json struct
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return msg, err
+		}
+		var data map[string]interface{}
+		log.Infof("biz.loginBankID GetSession body=%s", body)
+		err = json.Unmarshal([]byte(body), &data)
+		log.Infof("biz.loginBankID GetSession data=%s", data)
+
+		if errorObj, ok := data["errorObject"]; ok {
+			errorObject, _ := errorObj.(map[string]interface{})
+			message, _ := errorObject["message"].(map[string]interface{})
+			status := util.Val(message, "status")
+
+			log.Infof("biz.loginBankID errorObj=%s errorObject=%s message=%s status=%s", errorObj, errorObject, message, status)
+
+			if "pending" == status {
+				// 2 second is minimum wait time between requests to the API
+				time.Sleep(2 * time.Second)
+			} else {
+				return msg, errors.New("BankID authentication failed: " + status + " - " + util.Val(message, "hintCode"))
+			}
+		} else {
+			// we have a successful auth!
+
+			attributes := data["userAttributes"].(map[string]interface{})
+			name := attributes["name"]
+
+			log.Infof("biz.loginBankID !!!!!!!!!SUCCESSFUL AUTH!!!!!!!!  name=%s", name)
+
+			// Replace the name we got in the msg
+			infoMap["name"] = name
+			msg["info"] = infoMap
+			return msg, nil
+		}
+
+	}
+
+	return msg, errors.New("BankID authentication timed out")
 }
 
 // join room
@@ -121,6 +224,14 @@ func join(peer *signal.Peer, msg map[string]interface{}) (map[string]interface{}
 	if ok, err := verifyData(msg, "rid"); !ok {
 		return nil, err
 	}
+
+	// authenticate
+	msg, authErr := loginBankID(peer, msg)
+	if authErr != nil {
+		log.Infof("Error when authenticating with BankID: " + authErr.Error())
+		return nil, util.NewNpError(500, "Error when authenticating: "+authErr.Error())
+	}
+
 	rid := util.Val(msg, "rid")
 	//already joined this room
 	if signal.HasPeer(rid, peer) {
