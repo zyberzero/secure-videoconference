@@ -21,6 +21,9 @@ const char* QUERY_INSERT = "INSERT INTO invites (personal_number, meeting_id)"
 const char* QUERY_SELECT = "SELECT meeting_id FROM invites"
                            " WHERE personal_number = ?";
 
+const char* QUERY_EXISTS = "SELECT 1 FROM invites"
+                           " WHERE meeting_id = ?;";
+
 #define CHECK_ERROR(actual, expected) \
 if (actual != expected) \
 { \
@@ -53,6 +56,7 @@ void open_db()
 void close_db()
 {
 	sqlite3_close(db);
+	db = NULL;
 }
 
 void create_meeting(long meeting_id, int num_attendees, const char* attendees[])
@@ -104,4 +108,24 @@ int get_meetings(const char* personal_number, int* ids, int max_size)
 
 	sqlite3_finalize(statement);
 	return count;
+}
+
+// This should be updated if we add a second table with meetings
+bool check_meeting(long meeting_id)
+{
+	assert(db);
+
+	sqlite3_stmt* statement;
+	int rc;
+	rc = sqlite3_prepare_v2(db, QUERY_EXISTS, -1, &statement, NULL);
+	CHECK_ERROR(rc, SQLITE_OK);
+
+	rc = sqlite3_bind_int(statement, 1, meeting_id);
+	CHECK_ERROR(rc, SQLITE_OK);
+
+	rc = sqlite3_step(statement);
+	if (rc == SQLITE_ROW)
+		return true;
+
+	return false;
 }

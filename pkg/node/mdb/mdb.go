@@ -32,53 +32,62 @@ func main() {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/create/{id}", create)
 	router.HandleFunc("/get/{id}", get)
-    log.Fatal(http.ListenAndServe(":8081", router))
+	log.Fatal(http.ListenAndServe(":8081", router))
 }
 
 func create(w http.ResponseWriter, r *http.Request) {
-	key, err1 := strconv.Atoi(mux.Vars(r)["id"])
-	if err1 != nil {
-		fmt.Println(err1)
+	key, err := strconv.Atoi(mux.Vars(r)["id"])
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Invalid meeting id", http.StatusBadRequest)
+		return
 	}
 
 	defer r.Body.Close()
-    body, err2 := ioutil.ReadAll(r.Body)
-	if (err2 != nil) {
-		fmt.Println(err2)
+	body, err := ioutil.ReadAll(r.Body)
+	if (err != nil) {
+		fmt.Println(err)
+		http.Error(w, "Failed to read request data", http.StatusBadRequest)
+		return
 	}
 
 	var create CreateRequest
-	err3 := json.Unmarshal(body, &create)
-	if (err3 != nil) {
-		fmt.Println(err3)
+	err = json.Unmarshal(body, &create)
+	if (err != nil) {
+		fmt.Println(err)
+		http.Error(w, "Failed to parse request data", http.StatusBadRequest)
+		return
 	}
 
 	if (! meetingExists(key)) {
-		createMeeting(key, create.PersonNumbers)
+		createMeetingInDatabase(key, create.PersonNumbers)
+		http.Error(w, "Meeting already exists", http.StatusBadRequest)
+		return
 	}
 }
 
 func get(w http.ResponseWriter, r *http.Request) {
-	 w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 
 	key := mux.Vars(r)["id"]
 
-	meetings := GetResult{getMeetings(key)}
-	res, err3 := json.Marshal(meetings)
+	meetings := GetResult{getMeetingsFromDatabase(key)}
+	res, err := json.Marshal(meetings)
 
-	if (err3 != nil) {
-		fmt.Println(err3)
+	if (err != nil) {
+		http.Error(w, "Failed to serializer request data", http.StatusBadRequest)
+		panic(err)
 	}
 
 	fmt.Fprintf(w, string(res))
 }
 
 func meetingExists(id int) bool {
-	// TODO:
-	return false
+	ret := int(C.check_meeting(C.long(id)))
+	return ret != 0
 }
 
-func createMeeting(id int, personalNumbers []string) {
+func createMeetingInDatabase(id int, personalNumbers []string) {
 	cArray := C.create_array(C.int(len(personalNumbers)))
 	defer C.delete_array(cArray, C.int(len(personalNumbers)))
 
@@ -89,7 +98,7 @@ func createMeeting(id int, personalNumbers []string) {
 	C.create_meeting(C.long(id), C.int(len(personalNumbers)), cArray)
 }
 
-func getMeetings(personalNumber string) []int {
+func getMeetingsFromDatabase(personalNumber string) []int {
 	const MAX_MEETINGS = 1024
 	cInts := [MAX_MEETINGS]C.int{0}
 	count := int(C.get_meetings(C.CString(personalNumber), &cInts[0], C.int(len(cInts))))
