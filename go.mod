@@ -1,4 +1,4 @@
-module github.com/pion/ion
+module github.com/zyberzero/docker-compose
 
 go 1.13
 
