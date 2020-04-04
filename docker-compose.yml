@@ -67,3 +67,12 @@ services:
 
   redis:
     image: redis:5.0.7
+
+  mdb:
+    build:
+      dockerfile: ./docker/mdb.Dockerfile
+      context: .
+    volumes:
+      - "./docker/meetings.sqlite:/usr/local/bin/meetings.sqlite"
+    environment:
+      - MDB_SQLITE_KEY

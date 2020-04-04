@@ -36,7 +36,13 @@ void open_db()
 	rc = sqlite3_open(DB_FILENAME, &db);
 	CHECK_ERROR(rc, SQLITE_OK);
 
-	rc = sqlite3_key(db, SECRET_KEY, strlen(SECRET_KEY));
+	const char* key = getenv("MDB_SQLITE_KEY");
+	if (!key)
+	{
+		fprintf(stderr, "WARNING: using default encryption key\n");
+		key = SECRET_KEY;
+	}
+	rc = sqlite3_key(db, key, strlen(SECRET_KEY));
 	CHECK_ERROR(rc, SQLITE_OK);
 
 	char* err;
