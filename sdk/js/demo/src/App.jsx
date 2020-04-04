@@ -13,6 +13,7 @@ import VideocamOffIcon from "mdi-react/VideocamOffIcon";
 import MediaSettings from './settings';
 import ToolShare from './ToolShare';
 
+import MemberList from "./MemberList";
 import LoginForm from "./LoginForm";
 import Conference from "./Conference";
 import { Client, Stream } from "ion-sdk";
@@ -320,7 +321,9 @@ class App extends React.Component {
                 trigger={null}
                 collapsible
                 collapsed={this.state.collapsed}
-              />
+              >
+                  <MemberList client={this.client}/>
+		</Sider>
               <Layout className="app-right-layout">
                 <Content style={{ flex: 1 }}>
                   <Conference
