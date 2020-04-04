@@ -1,4 +1,4 @@
-module github.com/zyberzero/secure-videoconference
+module github.com/pion/ion
 
 go 1.13
 
