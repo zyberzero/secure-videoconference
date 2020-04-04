@@ -21,6 +21,7 @@ const (
 
 	// ion to client
 	ClientOnJoin         = "peer-join"
+	ClientAlreadyJoined  = "peer-already-joined"
 	ClientOnLeave        = "peer-leave"
 	ClientOnStreamAdd    = "stream-add"
 	ClientOnStreamRemove = "stream-remove"
