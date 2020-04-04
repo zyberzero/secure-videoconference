@@ -83,7 +83,7 @@ long create_meeting(int num_attendees, const char* attendees[])
 	assert(db);
 
 	// Syncronize here so that the id cannot be allocated again before
-	// it is inserted.
+	// it is inserted into the DB.
 	pthread_mutex_lock(&create_lock);
 	long meeting_id = create_meeting_id();
 

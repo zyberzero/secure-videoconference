@@ -12,9 +12,11 @@ import (
     "net/http"
     "io/ioutil"
     "encoding/json"
-    "github.com/gorilla/mux"
+    "github.com/gorilla/mux" // TODO: review license
 )
 
+// The protocol consists of two endpoints /get/{personNumber},
+// and /create. These structs serialize to json specify the protocol.
 type GetResponse struct {
 	Meetings []int
 }
@@ -26,7 +28,6 @@ type CreateRequest struct {
 type CreateResponse struct {
 	Meeting int
 }
-
 
 func main() {
 	C.open_db()
@@ -55,6 +56,11 @@ func create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if (len(create.PersonNumbers) == 0) {
+		http.Error(w, "No attendees specified", http.StatusBadRequest)
+		return
+	}
+
 	response := CreateResponse {createMeetingInDatabase(create.PersonNumbers)}
 	res, err := json.Marshal(response)
 
@@ -64,7 +70,6 @@ func create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, string(res))
-
 }
 
 func get(w http.ResponseWriter, r *http.Request) {
