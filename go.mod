@@ -1,4 +1,4 @@
-module github.com/zyberzero/docker-compose
+module github.com/zyberzero/secure-videoconference
 
 go 1.13
 
