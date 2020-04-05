@@ -17,16 +17,13 @@ import (
 
 // The protocol consists of two endpoints /get/{personNumber},
 // and /create. These structs serialize to json specify the protocol.
-type Room struct {
-	RoomName  string       `json:"roomName"`
-}
 
 type GetResponse struct {
-	Rooms []Room           `json:"rooms"`
+	Rooms []string          `json:"rooms"`
 }
 
 type CreateRequest struct {
-	RoomName        string `json:"roomName"`
+	Room            string `json:"room"`
 	PersonNumbers []string `json:"personNumbers"`
 }
 
@@ -43,9 +40,9 @@ func main() {
 
 func create(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
+
 	body, err := ioutil.ReadAll(r.Body)
 	if (err != nil) {
-		fmt.Println(err)
 		http.Error(w, "Failed to read request data", http.StatusBadRequest)
 		return
 	}
@@ -53,7 +50,6 @@ func create(w http.ResponseWriter, r *http.Request) {
 	var create CreateRequest
 	err = json.Unmarshal(body, &create)
 	if (err != nil) {
-		fmt.Println(err)
 		http.Error(w, "Failed to parse request data", http.StatusBadRequest)
 		return
 	}
@@ -63,14 +59,13 @@ func create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if (! createRoomInDatabase(create.PersonNumbers, create.RoomName) ) {
+	if (! createRoomInDatabase(create.PersonNumbers, create.Room) ) {
 		http.Error(w, "Failed to create room", http.StatusBadRequest)
 		return
 	}
 }
 
 func get(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
 
 	key := mux.Vars(r)["id"]
 
@@ -82,6 +77,7 @@ func get(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(w, string(res))
 }
 
@@ -96,16 +92,16 @@ func createRoomInDatabase(personalNumbers []string, roomName string) bool {
 	return int(C.create_room(C.CString(roomName), C.size_t(len(personalNumbers)), cArray)) != 0
 }
 
-func getRoomsFromDatabase(personalNumber string) []Room {
+func getRoomsFromDatabase(personalNumber string) []string {
 	const MAX_ROOMS = 1024
 
 	cArray := C.create_array(C.size_t(MAX_ROOMS))
 
 	count := int(C.get_rooms(C.CString(personalNumber), cArray, C.size_t(MAX_ROOMS)))
 
-	rooms := make([]Room, count)
+	rooms := make([]string, count)
 	for i := 0; i < count; i++ {
-		rooms[i].RoomName = C.GoString(C.get_array(cArray, C.size_t(i)))
+		rooms[i] = C.GoString(C.get_array(cArray, C.size_t(i)))
 	}
 	C.delete_array(cArray, C.size_t(count));
 
