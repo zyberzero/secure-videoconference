@@ -281,7 +281,6 @@ func join(peer *signal.Peer, msg map[string]interface{}) (map[string]interface{}
 		return nil, err
 	}
 
-
 	// authenticate
 	msg, authErr := loginBankID(peer, msg)
 	if authErr != nil {
@@ -289,18 +288,12 @@ func join(peer *signal.Peer, msg map[string]interface{}) (map[string]interface{}
 		return nil, util.NewNpError(500, "Error when authenticating: "+authErr.Error())
 	}
 
-	infoMap, _ := msg["info"].(map[string]interface{})
-	name := util.Val(infoMap, "name")
-
 	rid := util.Val(msg, "rid")
 	//already joined this room
 	if signal.HasPeer(rid, peer) {
 		return emptyMap, nil
 	}
-	signal.AddPeer(rid, peer, name)
-
-	// TODO: Use this for something cool!
-	// names := signal.GetPeerNames(rid)
+	signal.AddPeer(rid, peer)
 
 	islb, found := getRPCForIslb()
 	if !found {
@@ -351,7 +344,6 @@ func leave(peer *signal.Peer, msg map[string]interface{}) (map[string]interface{
 	if ok, err := verifyData(msg, "rid"); !ok {
 		return nil, err
 	}
-
 
 	rid := util.Val(msg, "rid")
 	uid := peer.ID()
