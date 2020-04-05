@@ -384,7 +384,12 @@ class App extends React.Component {
               </Layout>
             </Layout>
           ) : loading ? (
-            <Spin size="large" tip="Connecting..." />
+            <Card className="box-shadow" cover={
+              <Spin size="large" style={{paddingTop: '50px'}} />
+            }>
+              <br/>
+              Please open BankID on your phone to continue.
+            </Card>
           ) : error ? 
           (<Card title="Failed to join" className="box-shadow" headStyle={{backgroundColor: 'rgba(255, 255, 255, 0.7)', borderBottom: '1px solid #BBB' }}>{errorMsg}
           <Button type="primary" onClick={this._handleReset} className="login-join-button">
