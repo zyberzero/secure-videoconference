@@ -76,6 +76,6 @@ services:
       dockerfile: ./docker/mdb.Dockerfile
       context: .
     volumes:
-      - "./docker/meetings.sqlite:/usr/local/bin/meetings.sqlite"
+      - "./docker/hold_space:/var/run/hold_space"
     environment:
       - MDB_SQLITE_KEY

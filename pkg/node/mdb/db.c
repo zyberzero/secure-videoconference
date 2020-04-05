@@ -8,7 +8,7 @@
 
 #define SECRET_KEY_DEFAULT  "theveryhemliganyckleln"
 #define SECRET_KEY_ENV      "MDB_SQLITE_KEY"
-#define DB_FILENAME         "hold_space.sqlite"
+#define DB_FILENAME         "/var/run/hold_space/hold_space.sqlite"
 
 #define QUERY_CREATE        "CREATE TABLE IF NOT EXISTS invites ("   \
                             " id INTEGER PRIMARY KEY AUTOINCREMENT," \
