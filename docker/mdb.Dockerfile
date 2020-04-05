@@ -13,9 +13,8 @@ COPY . $GOPATH/src/github.com/pion/ion
 WORKDIR $GOPATH/src/github.com/pion/ion/pkg/node/mdb
 RUN CGO_ENABLED=1 GOOS=linux go build -a -i -o /mdb .
 
-FROM alpine:3.9.5
+FROM golang:1.13.7-stretch
 
-RUN apk --no-cache add ca-certificates
 COPY --from=0 /mdb /usr/local/bin/mdb
 
 ENTRYPOINT ["/usr/local/bin/mdb"]
