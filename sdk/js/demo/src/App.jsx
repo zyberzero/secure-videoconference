@@ -13,6 +13,7 @@ import VideocamOffIcon from "mdi-react/VideocamOffIcon";
 import MediaSettings from './settings';
 import ToolShare from './ToolShare';
 
+import MemberList from "./MemberList";
 import LoginForm from "./LoginForm";
 import Conference from "./Conference";
 import { Client, Stream } from "ion-sdk";
@@ -324,40 +325,7 @@ class App extends React.Component {
                 collapsible
                 collapsed={this.state.collapsed}
 				>
-				<Card title="Join to DerpFace" className="app-login-card">
-				  <Form  className="login-form">
-					<Form.Item>
-					  {(
-						  <Input
-							prefix={<Icon type="team" className="login-input-icon" />}
-							placeholder="Room Id"
-							/>
-					  )}
-			  </Form.Item>
-				  <Form.Item>
-				  {(
-					  <Input
-						prefix={
-								<Icon type="contacts" className="login-input-icon" />
-								}
-								placeholder="Display Name"
-								/>
-				  )}
-			  </Form.Item>
-				  <Form.Item>
-				  {(
-					  <Checkbox>
-						Audio only
-					  </Checkbox>
-				  )}
-			  </Form.Item>
-				  <Form.Item>
-				  <Button type="primary" htmlType="submit" className="login-join-button">
-				  Join
-			  </Button>
-				  </Form.Item>
-				  </Form>
-				</Card> 
+				<MemberList client={this.client}/>
 			  </Sider>
               <Layout className="app-right-layout">
                 <Content style={{ flex: 1 }}>
