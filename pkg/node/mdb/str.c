@@ -1,17 +1,22 @@
 #include "str.h"
 #include <stdlib.h>
 
-const char** create_array(int size)
+char** create_array(size_t size)
 {
-	return malloc(sizeof(char*) * size);
+	return calloc(1, sizeof(char*) * size);
 }
 
-void set_array(char** array, char* string, int i)
+char* get_array(char** array, size_t i)
+{
+	return array[i];
+}
+
+void set_array(char** array, char* string, size_t i)
 {
 	array[i] = string;
 }
 
-void delete_array(char** array, int size)
+void delete_array(char** array, size_t size)
 {
 	for (int i = 0; i < size; ++i)
 		free(array[i]);

@@ -1,9 +1,12 @@
-#ifndef MEETING_STR_H
-#define MEETING_STR_H
+#ifndef HOLD_SPACE_STR_H
+#define HOLD_SPACE_STR_H
+
+#include <stddef.h>
 
 // Helpers to create and manage a char** from golang
-const char** create_array(int size);
-void set_array(char** array, char* string, int i);
-void delete_array(char** array, int size);
+char** create_array(size_t size);
+char* get_array(char** array, size_t i);
+void set_array(char** array, char* string, size_t i);
+void delete_array(char** array, size_t size);
 
 #endif
