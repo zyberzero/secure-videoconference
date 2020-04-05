@@ -12,24 +12,22 @@
 
 #define QUERY_CREATE        "CREATE TABLE IF NOT EXISTS invites ("   \
                             " id INTEGER PRIMARY KEY AUTOINCREMENT," \
-                            " personal_number TEXT,"                 \
-                            " room_id INTEGER); "                 \
-                            "CREATE TABLE IF NOT EXISTS rooms ("  \
-                            " id INTEGER PRIMARY KEY,"                \
-                            " name TEXT);"
+                            " personal_number TEXT NOT NULL,"        \
+                            " room_id INTEGER NOT NULL); "           \
+                            "CREATE TABLE IF NOT EXISTS rooms ("     \
+                            " id INTEGER PRIMARY KEY AUTOINCREMENT," \
+                            " name TEXT UNIQUE NOT NULL);"
 
 #define QUERY_INSERT_INVITE "INSERT INTO invites (personal_number, room_id)" \
-                            " values (?, ?)"
+                            " values (?, ?);"
 
-#define QUERY_INSERT_ROOM   "INSERT INTO rooms (id, name)" \
-                            " values (?, ?)"
+#define QUERY_INSERT_ROOM   "INSERT INTO rooms (name)"     \
+                            " values (?);"
 
-#define QUERY_SELECT        "SELECT rooms.id, rooms.name FROM rooms" \
-                            " INNER JOIN invites"                             \
-                            " ON rooms.id = invites.room_id"            \
+#define QUERY_SELECT        "SELECT rooms.name FROM rooms"           \
+                            " INNER JOIN invites"                    \
+                            " ON rooms.id = invites.room_id"         \
                             " WHERE invites.personal_number = ?;"
-
-#define QUERY_NEXT_ID       "SELECT MAX(id) + 1 from rooms;"
 
 #define CHECK_ERROR(actual, expected) \
 if (actual != expected)               \
@@ -69,42 +67,31 @@ void close_db()
 static long create_room_id(const char* name)
 {
 	static pthread_mutex_t create_lock = PTHREAD_MUTEX_INITIALIZER;
-	// Syncronize here so that the id cannot be allocated again before
-	// it is inserted into the DB.
-
-	// TODO: should names be unique?
-
-	pthread_mutex_lock(&create_lock);
 
 	int rc;
 	sqlite3_stmt* statement;
-	rc = sqlite3_prepare_v2(db, QUERY_NEXT_ID, -1, &statement, NULL);
-	CHECK_ERROR(rc, SQLITE_OK);
-
-	rc = sqlite3_step(statement);
-	CHECK_ERROR(rc, SQLITE_ROW);
-
-	long id = sqlite3_column_int64(statement, 0);
-	sqlite3_finalize(statement);
-
-	assert(id >= 0);
 
 	rc = sqlite3_prepare_v2(db, QUERY_INSERT_ROOM, -1, &statement, NULL);
 	CHECK_ERROR(rc, SQLITE_OK);
 
-	rc = sqlite3_bind_int64(statement, 1, id);
+	rc = sqlite3_bind_text(statement, 1, name, -1, NULL);
 	CHECK_ERROR(rc, SQLITE_OK);
 
-	rc = sqlite3_bind_text(statement, 2, name, -1, NULL);
-	CHECK_ERROR(rc, SQLITE_OK);
-
+	// Syncronize because of last_insert_rowid()
+	pthread_mutex_lock(&create_lock);
 	rc = sqlite3_step(statement);
+	long id = sqlite3_last_insert_rowid(db);
+	pthread_mutex_unlock(&create_lock);
+
+	if (rc == SQLITE_CONSTRAINT)
+	{
+		sqlite3_finalize(statement);
+		return -1;
+	}
+
 	CHECK_ERROR(rc, SQLITE_DONE);
 
 	sqlite3_finalize(statement);
-
-	pthread_mutex_unlock(&create_lock);
-
 	return id;
 }
 
@@ -133,19 +120,23 @@ static void insert_attendees(long id, size_t num_attendees, char** attendees)
 	sqlite3_finalize(statement);
 }
 
-long create_room(const char* name, size_t num_attendees, char** attendees)
+bool create_room(const char* name, size_t num_attendees, char** attendees)
 {
 	if (num_attendees <= 0)
-		return -1;
+		return false;
 
 	assert(db);
 
 	long id = create_room_id(name);
+
+	if (id == -1)
+		return false;
+
 	insert_attendees(id, num_attendees, attendees);
-	return id;
+	return true;
 }
 
-size_t get_rooms(const char* personal_number, long* ids, char** names, size_t max_size)
+size_t get_rooms(const char* personal_number, char** names, size_t max_size)
 {
 	assert(db);
 
@@ -158,8 +149,7 @@ size_t get_rooms(const char* personal_number, long* ids, char** names, size_t ma
 	size_t count = 0;
 	while (sqlite3_step(statement) == SQLITE_ROW)
 	{
-		ids[count] = sqlite3_column_int64(statement, 0);
-		names[count] = strdup(sqlite3_column_text(statement, 1));
+		names[count] = strdup(sqlite3_column_text(statement, 0));
 
 		if(++count == max_size)
 			break;
