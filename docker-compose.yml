@@ -8,6 +8,7 @@ services:
     image: pionwebrtc/ion-web
     volumes:
       - "./docker/Caddyfile:/etc/Caddyfile"
+      - "./docker/caddyhome:/var/caddyhome"
     ports:
       - 80:80
       - 8080:8080
@@ -18,6 +19,7 @@ services:
     environment:
     - WWW_URL
     - ADMIN_EMAIL
+    - CADDYPATH=/var/caddyhome
 
   sfu:
     build:
