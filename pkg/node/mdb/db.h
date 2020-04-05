@@ -18,4 +18,7 @@ bool create_room(const char* name, size_t num_attendees, char** attendees);
 // The return value is the number of entries written.
 size_t get_rooms(const char* personal_number, char** names, size_t max_size);
 
+// Write contents to stdout. For debugging purposes.
+void dump_db();
+
 #endif

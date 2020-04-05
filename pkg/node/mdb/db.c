@@ -29,6 +29,10 @@
                             " ON rooms.id = invites.room_id"         \
                             " WHERE invites.personal_number = ?;"
 
+#define QUERY_FULL          "SELECT rooms.name, invites.personal_number" \
+                            " FROM rooms LEFT JOIN invites "             \
+                            " ON rooms.id = invites.room_id;"            \
+
 #define CHECK_ERROR(actual, expected) \
 if (actual != expected)               \
 {                                     \
@@ -161,4 +165,25 @@ size_t get_rooms(const char* personal_number, char** names, size_t max_size)
 
 	sqlite3_finalize(statement);
 	return count;
+}
+
+void dump_db()
+{
+	assert(db);
+	sqlite3_stmt* statement;
+	int rc;
+
+	rc = sqlite3_prepare_v2(db, QUERY_FULL, -1, &statement, NULL);
+	CHECK_ERROR(rc, SQLITE_OK);
+
+	printf("--- Database dump --\n");
+	printf("Room\tAttendant\n");
+	printf("--------------------\n");
+	while (sqlite3_step(statement) == SQLITE_ROW)
+	{
+		char* room = sqlite3_column_text(statement, 0);
+		char* attendant = sqlite3_column_text(statement, 1);
+		printf("%s\t%s\n", room, attendant);
+	}
+	sqlite3_finalize(statement);
 }
