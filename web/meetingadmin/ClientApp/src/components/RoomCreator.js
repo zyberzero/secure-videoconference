@@ -62,11 +62,12 @@ export default class RoomCreator extends React.Component {
 					<input class="input" value={this.state.roomName} onChange={this.handleChangeMeeting} /><br />
 					<br/>
                    <h1>SSN:</h1> <br/><input class="input" placeholder="YYYYMMDDXXXX"value={this.state.ssn} onChange={this.handleChange} type="text" />
-					<br/>
 
-					<br/><button class="button-add-ssn" disabled={!this.state.buttonEnabled} onClick={this.addSsn}>Add SSN</button>
-                    <ul>
-                    {this.state.ssns.map(ssn => (<li key={ssn}>{ssn}<button class='button-add-ssn' >Remove</button></li>))}
+					<button class="button-add-ssn" disabled={!this.state.buttonEnabled} onClick={this.addSsn}>Add SSN</button>
+                    <ul style={{paddingTop:'40px'}} >
+                    {this.state.ssns.map(ssn => (<li style={{height:'40px'}} key={ssn}>{ssn}<button class='button-add-ssn' >Remove</button></li>))}
+									<br/>
+
                     </ul>
 					<br/>
 					<br/>
