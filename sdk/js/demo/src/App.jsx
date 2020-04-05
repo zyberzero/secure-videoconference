@@ -249,11 +249,11 @@ class App extends React.Component {
       <Layout className="app-layout">
         <Header className="app-header">
           <div className="app-header-left" >
-            <a href="https://pion.ly" target="_blank">
+            {/*<a href="https://pion.ly" target="_blank">*/}
               {/* <img src="/pion-logo.svg" className="app-logo-img" />*/}
 			  <img src="/hsLogo.png" className="app-logo-img" />
 
-            </a>
+              {/*</a>*/}
           </div>
           {login ? (
             <div className="app-header-tool">
@@ -400,7 +400,7 @@ class App extends React.Component {
 
         {!login && (
           <Footer className="app-footer">
-            Powered by AndyBoi.
+            
           </Footer>
         )}
       </Layout>
