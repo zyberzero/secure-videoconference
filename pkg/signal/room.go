@@ -8,10 +8,12 @@ import (
 
 type Room struct {
 	room.Room
+	names map[string]string
 }
 
-func (r *Room) AddPeer(peer *Peer) {
+func (r *Room) AddPeer(peer *Peer, name string) {
 	r.Room.AddPeer(&peer.Peer)
+	r.names[peer.ID()] = name
 }
 
 func (r *Room) ID() string {
@@ -82,16 +84,17 @@ func DelPeer(rid, id string) {
 	room := getRoom(rid)
 	if room != nil {
 		room.RemovePeer(id)
+		delete(room.names, id)
 	}
 }
 
-func AddPeer(rid string, peer *Peer) {
+func AddPeer(rid string, peer *Peer, name string) {
 	log.Infof("AddPeer rid=%s peer.ID=%s", rid, peer.ID())
 	room := getRoom(rid)
 	if room == nil {
 		room = newRoom(rid)
 	}
-	room.AddPeer(peer)
+	room.AddPeer(peer, name)
 }
 
 func HasPeer(rid string, peer *Peer) bool {
@@ -101,6 +104,19 @@ func HasPeer(rid string, peer *Peer) bool {
 		return false
 	}
 	return room.GetPeer(peer.ID()) != nil
+}
+
+func GetPeerNames(rid string) []string {
+	room := getRoom(rid)
+	var names []string
+	if room == nil {
+		return names
+	}
+
+	for _, name := range room.names {
+		names = append(names, name)
+	}
+	return names
 }
 
 func NotifyAllWithoutPeer(rid string, peer *Peer, method string, msg map[string]interface{}) {
