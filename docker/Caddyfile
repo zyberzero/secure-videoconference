@@ -5,6 +5,11 @@
 {$WWW_URL}:8080 {
   root /app/demo/dist
 }
+{$WWW_URL}:9090 {
+  proxy / maw:80 {
+    transparent
+  }
+}
 
 {$WWW_URL}:8443 {
   proxy / biz:8443 {

@@ -11,6 +11,7 @@ services:
     ports:
       - 80:80
       - 8080:8080
+      - 9090:9090
       - 8443:8443
     depends_on:
       - biz
@@ -79,3 +80,10 @@ services:
       - "./docker/hold_space:/var/run/hold_space"
     environment:
       - MDB_SQLITE_KEY
+  maw:
+    build:
+      dockerfile: ./docker/maw.Dockerfile
+      context: ./
+    environment:
+      - "MDB_URL=http://mdb:8081/"
+      - "ASPNETCORE_BASEPATH=/roomadmin/"

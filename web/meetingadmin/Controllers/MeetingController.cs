@@ -22,6 +22,7 @@ namespace meetingadmin.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateMeeting(Meeting meeting)
         {
+            logger.LogInformation("Creating meeting with name %s", meeting.RoomName);
             var meetingRoom = await this.meetingService.AddMeeting(meeting);
             return Ok(meetingRoom);
         }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using meetingadmin.Domain;
-using meetingadmin.Services.Meetings.Entites;
+using meetingadmin.Services.Meetings.Entities;
 using Newtonsoft.Json;
 
 
@@ -11,7 +11,7 @@ namespace meetingadmin.Services.Meetings
 {
     public interface IMeetingService
     {
-        Task<long> AddMeeting(Meeting meeting);
+        Task<bool> AddMeeting(Meeting meeting);
     }
 
     public class MeetingService : IMeetingService
@@ -24,17 +24,22 @@ namespace meetingadmin.Services.Meetings
             };
         }
 
-        public async Task<long> AddMeeting(Meeting meeting)
+        public async Task<bool> AddMeeting(Meeting meeting)
         {
-            var serialized = JsonConvert.SerializeObject(meeting);
+            var serialized = JsonConvert.SerializeObject(MapRoom(meeting));
 
             var content = new StringContent(serialized);
 
             var res = await httpClient.PostAsync("create", content);
 
-            var responseObject = JsonConvert.DeserializeObject<CreateMeetingResponse>(await res.Content.ReadAsStringAsync());
+            return res.IsSuccessStatusCode;
+        }
 
-            return responseObject.Meeting;
+        private Entities.CreateRoomRequest MapRoom(Meeting meeting) {
+            return new Entities.CreateRoomRequest() {
+                Room = meeting.RoomName,
+                PersonNumbers = meeting.PersonNumbers
+            };
         }
     }
 }

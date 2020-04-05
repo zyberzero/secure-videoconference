@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Layout } from './components/Layout';
-import MeetingCreator from './components/MeetingCreator'
+import RoomCreator from './components/RoomCreator'
 import './custom.css'
 
 export default class App extends Component {
@@ -9,8 +9,8 @@ export default class App extends Component {
   render () {
     return (
       <Layout>
-        <MeetingCreator>
-        </MeetingCreator>
+        <RoomCreator>
+        </RoomCreator>
       </Layout>
     );
   }
