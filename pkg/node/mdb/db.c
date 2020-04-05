@@ -37,6 +37,7 @@ if (actual != expected)               \
 }
 
 static sqlite3* db                 = NULL;
+static pthread_mutex_t create_lock = PTHREAD_MUTEX_INITIALIZER;
 
 void open_db()
 {
@@ -66,8 +67,6 @@ void close_db()
 
 static long create_room_id(const char* name)
 {
-	static pthread_mutex_t create_lock = PTHREAD_MUTEX_INITIALIZER;
-
 	int rc;
 	sqlite3_stmt* statement;
 
@@ -102,6 +101,9 @@ static void insert_attendees(long id, size_t num_attendees, char** attendees)
 	rc = sqlite3_prepare_v2(db, QUERY_INSERT_INVITE, -1, &statement, NULL);
 	CHECK_ERROR(rc, SQLITE_OK);
 
+	// Syncronize because of last_insert_rowid() in create_room_id
+	pthread_mutex_lock(&create_lock);
+
 	for (int i = 0; i < num_attendees; ++i)
 	{
 		rc = sqlite3_bind_text(statement, 1, attendees[i], -1, NULL);
@@ -116,6 +118,8 @@ static void insert_attendees(long id, size_t num_attendees, char** attendees)
 		rc = sqlite3_reset(statement);
 		CHECK_ERROR(rc, SQLITE_OK);
 	}
+
+	pthread_mutex_unlock(&create_lock);
 
 	sqlite3_finalize(statement);
 }
