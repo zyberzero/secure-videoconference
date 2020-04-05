@@ -204,18 +204,74 @@ func loginBankID(peer *signal.Peer, msg map[string]interface{}) (map[string]inte
 
 			attributes := data["userAttributes"].(map[string]interface{})
 			name := attributes["name"]
+			personalNumber := util.Val(attributes, "personalNumber")
+			rid := util.Val(msg, "rid")
 
-			log.Infof("biz.loginBankID !!!!!!!!!SUCCESSFUL AUTH!!!!!!!!  name=%s", name)
+			if authMeetingCredentials(personalNumber, rid) {
+				// The user is welcome into the room
+				log.Infof("biz.loginBankID !!!!!!!!!SUCCESSFUL AUTH!!!!!!!!  name=%s", name)
 
-			// Replace the name we got in the msg
-			infoMap["name"] = name
-			msg["info"] = infoMap
-			return msg, nil
+				// Replace the name we got in the msg
+				infoMap["name"] = name
+				msg["info"] = infoMap
+				return msg, nil
+			} else {
+				return msg, errors.New("The user is not allowed to enter this room")
+			}
+
 		}
 
 	}
 
 	return msg, errors.New("BankID authentication timed out")
+}
+
+func authMeetingCredentials(personalID string, rid string) bool {
+	type GetResponse struct {
+		Rooms []string `json:"rooms"`
+	}
+
+	tr := &http.Transport{
+		MaxIdleConns:       10,
+		IdleConnTimeout:    30 * time.Second,
+		DisableCompression: true,
+	}
+	client := &http.Client{Transport: tr}
+
+	url := "http://mdb:8081/get/" + personalID
+	log.Infof("biz.authMeeting checking authorization with url=%s", url)
+	resp, err := client.Get(url)
+	if err != nil {
+		log.Infof("biz.authMeeting ERROR: Unable to contact room service: " + err.Error())
+		return false
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Infof("biz.authMeeting ERROR: Unable to read room service response" + err.Error())
+		return false
+	}
+	log.Infof("biz.authMeeting Got response from room service: %s", body)
+
+	var data GetResponse
+	err = json.Unmarshal([]byte(body), &data)
+	if err != nil {
+		log.Infof("biz.authMeeting ERROR: Unable to parse room service response" + err.Error())
+		return false
+	}
+	log.Infof("biz.authMeeting Parsed room data for user: %s", data)
+
+	rooms := data.Rooms
+	log.Infof("biz.authMeeting rooms=%s", rooms)
+	for i := 0; i < len(rooms); i++ {
+		room := rooms[i]
+		if rid == room {
+			log.Infof("biz.authMeeting found a matching meeting in the user's list")
+			return true
+		}
+	}
+	log.Infof("biz.authMeeting the user is not authorized to join this meeting")
+	return false
 }
 
 // join room
@@ -228,7 +284,7 @@ func join(peer *signal.Peer, msg map[string]interface{}) (map[string]interface{}
 	// authenticate
 	msg, authErr := loginBankID(peer, msg)
 	if authErr != nil {
-		log.Infof("Error when authenticating with BankID: " + authErr.Error())
+		log.Infof("biz.join Error when authenticating with BankID: " + authErr.Error())
 		return nil, util.NewNpError(500, "Error when authenticating: "+authErr.Error())
 	}
 
