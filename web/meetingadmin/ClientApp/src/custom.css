@@ -1,3 +1,5 @@
+
+
 /* Provide sufficient contrast against white background */
 a {
   color: #0366d6;
@@ -7,8 +9,102 @@ code {
   color: #E01A76;
 }
 
+
+
 .btn-primary {
   color: #fff;
   background-color: #1b6ec2;
   border-color: #1861ac;
+}
+
+.header{
+  background-color: #90c2bf;
+}
+.app-logo-img {
+	align: left;
+  width: 100px;
+  height: 50px;
+}
+.app-center-layout {
+  background-image: url("/bg.jpg");
+  background-size: cover;
+  background-color: #EEE;
+  /* margin-right: auto; */
+  /* margin-left: auto; */
+  /* margin-top: auto; */
+  /* margin-bottom: auto; */
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 440px;
+}
+
+.app-footer {
+	text-align: left;
+	color: white;
+	background-color: #9FCECB;
+}
+.app-layout {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+#root,
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.app-login-card {
+	height: 380px;
+	widht: 500px;
+	min-width: 500px;
+	background-color: rgba(255, 255, 255, 0.5);
+	flex-direction: column;
+	display:flex;
+}
+
+.room-button{
+	position: absolute;
+	color: #FFF;
+	padding:10px;
+	width: 100%;
+	bottom: 10px;
+}
+.room-button:disabled{
+	background-color: #CCC;
+}
+.button-add-ssn{
+	color: #FFF;
+	float: right;
+	padding: 10px;
+	background-color: #6BCBD1;
+}
+.button-add-ssn:disabled{
+	background-color: #BBB;
+}
+
+
+.ant-card-head{
+	padding-top: 17px;
+	padding-left: 20px;
+	height: 15%;
+	font-size: 16px;
+	vertical-align: middle;
+	text-align: left;
+
+}
+.ant-card-body{
+	padding: 20px;
+	height: 100%;
+	position:relative;
+}
+
+.input{
+	width: 100%;
+	height: 30px;
 }

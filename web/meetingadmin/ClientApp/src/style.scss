@@ -140,7 +140,7 @@ button,
 select,
 keygen,
 legend {
-  font: 12px/1.14 arial, \5b8b\4f53;
+  font: 14px/1.14 arial, \5b8b\4f53;
   color: #333;
   outline: 0;
 }
@@ -168,13 +168,13 @@ body {
 }
 
 .app-header {
-  padding: 20px;
+  padding: 0px;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
   background-color: #90c2bf;
-  height: 50px;
+  height: 64px;
 
 }
 
