@@ -173,15 +173,21 @@ body {
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  background-color: #90c2bf;
+
 }
 
 .app-header-left {
   margin-left: 8px;
 }
 
+// .app-logo-img {
+//   width: 112px;
+//   height: 28px;
+// }
 .app-logo-img {
-  width: 112px;
-  height: 28px;
+  width: 100px;
+  height: 50px;
 }
 
 .app-header-right {
@@ -225,6 +231,9 @@ body {
 }
 
 .app-center-layout {
+   background-image: url("/bg.jpg");
+  background-size: cover;
+  background-color: #EEE;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -233,11 +242,14 @@ body {
 }
 
 .app-login-card {
-  height: 320px;
+	height: 380px;
+	background-color: rgba(255, 255, 255, 0.5); //#FFF;
 }
 
 .app-footer {
-  text-align: center;
+	text-align: left;
+	color: white;
+	background-color: #9FCECB;
 }
 
 .app-content-layout {
@@ -265,7 +277,7 @@ body {
 
 /*------------------login--------------------*/
 .login-form {
-  min-width: 360px;
+	min-width: 360px;
 }
 
 .login-input-icon {
@@ -273,9 +285,15 @@ body {
 }
 
 .login-join-button {
-  width: 100%;
+	width: 100%;
+	background-color: #9FCECB;
+	border-color: #9FCECB;
 }
-
+						  
+.login-join-button:hover {
+	background-color: #6BCBD1;
+	border-color:  #6BCBD1;
+}
 
 /*------------------conference--------------------*/
 .conference-layout {
@@ -481,4 +499,10 @@ body {
   height:180px;
   background-color: #000000;
   margin-top: 20px;
+}
+.box-shadow-inset{
+  box-shadow: inset 0 0 0.75em rgba(0, 0, 0, .25);
+}
+.box-shadow{
+  box-shadow: 0 0 0.5em rgba(0, 0, 0, .05);
 }

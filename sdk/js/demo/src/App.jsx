@@ -1,5 +1,5 @@
 import React from "react";
-import { Layout, Button, Modal, Icon, notification, Card, Spin, Tooltip } from "antd";
+import {Checkbox, Input, Form, Layout, Button, Modal, Icon, notification, Card, Spin, Tooltip } from "antd";
 const { confirm } = Modal;
 const { Header, Content, Footer, Sider } = Layout;
 import { reactLocalStorage } from "reactjs-localstorage";
@@ -13,10 +13,10 @@ import VideocamOffIcon from "mdi-react/VideocamOffIcon";
 import MediaSettings from './settings';
 import ToolShare from './ToolShare';
 
-import MemberList from "./MemberList";
 import LoginForm from "./LoginForm";
 import Conference from "./Conference";
 import { Client, Stream } from "ion-sdk";
+
 
 class App extends React.Component {
   constructor() {
@@ -229,9 +229,11 @@ class App extends React.Component {
     return (
       <Layout className="app-layout">
         <Header className="app-header">
-          <div className="app-header-left">
+          <div className="app-header-left" >
             <a href="https://pion.ly" target="_blank">
-              <img src="/pion-logo.svg" className="app-logo-img" />
+              {/* <img src="/pion-logo.svg" className="app-logo-img" />*/}
+			  <img src="/hsLogo.png" className="app-logo-img" />
+
             </a>
           </div>
           {login ? (
@@ -308,10 +310,10 @@ class App extends React.Component {
             )}
           <div className="app-header-right">
             <MediaSettings onMediaSettingsChanged={this._onMediaSettingsChanged} settings={this._settings} />
-          </div>
+			</div>
         </Header>
 
-        <Content className="app-center-layout">
+        <Content className="app-center-layout box-shadow-inset">
           {login ? (
             <Layout className="app-content-layout">
               <Sider
@@ -321,9 +323,42 @@ class App extends React.Component {
                 trigger={null}
                 collapsible
                 collapsed={this.state.collapsed}
-              >
-                  <MemberList client={this.client}/>
-		</Sider>
+				>
+				<Card title="Join to DerpFace" className="app-login-card">
+				  <Form  className="login-form">
+					<Form.Item>
+					  {(
+						  <Input
+							prefix={<Icon type="team" className="login-input-icon" />}
+							placeholder="Room Id"
+							/>
+					  )}
+			  </Form.Item>
+				  <Form.Item>
+				  {(
+					  <Input
+						prefix={
+								<Icon type="contacts" className="login-input-icon" />
+								}
+								placeholder="Display Name"
+								/>
+				  )}
+			  </Form.Item>
+				  <Form.Item>
+				  {(
+					  <Checkbox>
+						Audio only
+					  </Checkbox>
+				  )}
+			  </Form.Item>
+				  <Form.Item>
+				  <Button type="primary" htmlType="submit" className="login-join-button">
+				  Join
+			  </Button>
+				  </Form.Item>
+				  </Form>
+				</Card> 
+			  </Sider>
               <Layout className="app-right-layout">
                 <Content style={{ flex: 1 }}>
                   <Conference
@@ -365,19 +400,15 @@ class App extends React.Component {
           ) : loading ? (
             <Spin size="large" tip="Connecting..." />
           ) : (
-                <Card title="Join to Ion" className="app-login-card">
+                <Card title="Welcome to HoldSpace" className="app-login-card box-shadow" headStyle={{backgroundColor: 'rgba(255, 255, 255, 0.7)', borderBottom: '1px solid #BBB' }}>
                   <LoginForm handleLogin={this._handleJoin} />
                 </Card>
               )}
         </Content>
 
         {!login && (
-          <Footer className=".app-footer">
-            Powered by{" "}
-            <a href="https://pion.ly" target="_blank">
-              Pion
-            </a>{" "}
-            WebRTC.
+          <Footer className="app-footer">
+            Powered by AndyBoi.
           </Footer>
         )}
       </Layout>
