@@ -58,8 +58,10 @@ export default class Client extends EventEmitter {
         try {
             let data = await this._protoo.request('join', { 'rid': this._rid, 'uid': this._uid, info });
             console.log('join success: result => ' + JSON.stringify(data));
+            return { Ok : true }
         } catch (error) {
             console.log('join reject: error =>' + error);
+            return {Ok : false, error}
         }
     }
 

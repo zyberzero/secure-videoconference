@@ -30,7 +30,9 @@ class App extends React.Component {
       screenSharingEnabled: false,
       collapsed: true,
       isFullScreen: false,
-      loginInfo: {}
+      loginInfo: {},
+      error: false,
+      errorMsg: ''
     };
 
     this._settings = {
@@ -98,11 +100,25 @@ class App extends React.Component {
     });
   };
 
+  _handleReset = () => {
+    this.setState({
+      error: false,
+      errorMsg: ''
+    });
+  };
+
   _handleJoin = async values => {
     this.setState({ loading: true });
     reactLocalStorage.clear("loginInfo");
     reactLocalStorage.setObject("loginInfo", values);
-    await this.client.join(values.roomId, { name: values.displayName });
+    let response = await this.client.join(values.roomId, { name: values.displayName });
+
+    if(!response.Ok) {
+      console.log(response);
+      this.setState({loading: false, error: true, errorMsg: response.error.message});
+      return;
+    }
+
     this.setState({ 
       login: true, 
       loading: false, 
@@ -225,7 +241,9 @@ class App extends React.Component {
       localAudioEnabled,
       localVideoEnabled,
       screenSharingEnabled,
-      collapsed
+      collapsed,
+      error,
+      errorMsg
     } = this.state;
     return (
       <Layout className="app-layout">
@@ -367,7 +385,13 @@ class App extends React.Component {
             </Layout>
           ) : loading ? (
             <Spin size="large" tip="Connecting..." />
-          ) : (
+          ) : error ? 
+          (<Card title="Failed to join" className="box-shadow" headStyle={{backgroundColor: 'rgba(255, 255, 255, 0.7)', borderBottom: '1px solid #BBB' }}>{errorMsg}
+          <Button type="primary" onClick={this._handleReset} className="login-join-button">
+            Retry
+          </Button>
+          </Card>)
+          : (
                 <Card title="Welcome to HoldSpace" className="app-login-card box-shadow" headStyle={{backgroundColor: 'rgba(255, 255, 255, 0.7)', borderBottom: '1px solid #BBB' }}>
                   <LoginForm handleLogin={this._handleJoin} />
                 </Card>
